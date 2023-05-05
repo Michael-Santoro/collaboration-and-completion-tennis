@@ -16,7 +16,7 @@ def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     return layer
 
 class Agent(nn.Module):
-    def __init__(self, state_size:int, action_size:int, n=100): #n=64
+    def __init__(self, state_size:int, action_size:int, n=128): #n=64
         super().__init__()
         self.critic = nn.Sequential(
             layer_init(nn.Linear(np.array(state_size).prod(), n)),

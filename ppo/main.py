@@ -66,8 +66,8 @@ num_minibatches = 32    #the number of mini-batches **Could Change to 4**
 clip_coef = 0.2         #the surrogate clipping coefficient
 clip_vloss = True       #Toggles whether or not to use a clipped loss for the value function, as per the paper.
 norm_adv = True         #Toggles advantages normalization
-ent_coef = 0.5          #coefficient of the entropy
-vf_coef = 0.75           #coefficient of the value function
+ent_coef = 0.1          #coefficient of the entropy
+vf_coef = 0.95           #coefficient of the value function
 max_grad_norm = 0.5     #the maximum norm for the gradient clipping
 target_kl = None        #the target KL divergence threshold
 
@@ -75,15 +75,7 @@ batch_size = int(num_envs * num_steps)
 minibatch_size = int(batch_size // num_minibatches)
 
 agent = Agent(single_observation_space, single_action_space).to(device)
-optimizer = optim.Adam(agent.parameters(), lr=learning_rate, eps=1e-5)
-
-# ALGO Logic: Storage setup
-obs = torch.zeros((num_steps, num_envs) + (single_observation_space,)).to(device)
-actions = torch.zeros((num_steps,num_envs) + (single_action_space,)).to(device)
-logprobs = torch.zeros((num_steps, num_envs)).to(device)
-rewards = torch.zeros((num_steps, num_envs)).to(device)
-dones = torch.zeros((num_steps, num_envs)).to(device)
-values = torch.zeros((num_steps, num_envs)).to(device)
+optimizer = optim.Adam(agent.parameters(), lr=learning_rate, eps=1e-5, weight_decay=0.0)
 
 num_updates = total_timesteps // batch_size
 
@@ -93,6 +85,13 @@ scores_deque = deque(maxlen=100)
 print(f'Number of Updates: {num_updates}')
 
 for update in range(1, num_updates + 1):
+    # ALGO Logic: Storage setup
+    obs = torch.zeros((num_steps, num_envs) + (single_observation_space,)).to(device)
+    actions = torch.zeros((num_steps,num_envs) + (single_action_space,)).to(device)
+    logprobs = torch.zeros((num_steps, num_envs)).to(device)
+    rewards = torch.zeros((num_steps, num_envs)).to(device)
+    dones = torch.zeros((num_steps, num_envs)).to(device)
+    values = torch.zeros((num_steps, num_envs)).to(device)
     env_info = env.reset(train_mode=train_mode)[brain_name]      # reset the environment    
     states = env_info.vector_observations                  # get the current state (for each agent)
     next_obs = torch.Tensor(states).to(device)
@@ -146,7 +145,7 @@ for update in range(1, num_updates + 1):
                 advantages[t] = lastgaelam = delta + gamma * gae_lambda * nextnonterminal * lastgaelam
             returns = advantages + values
 
-    
+    # pdb.set_trace()
     scores = np.sum(rewards.cpu().numpy(),axis=0)
     scores_deque.append(scores.max())
     # pdb.set_trace()
@@ -174,8 +173,8 @@ for update in range(1, num_updates + 1):
         for start in range(0, batch_size, minibatch_size):
             end = start + minibatch_size
             mb_inds = b_inds[start:end]
-            if update >= 668:
-                pdb.set_trace()
+            # if update >= 668:
+            #     pdb.set_trace()
 
             _, newlogprob, entropy, newvalue = agent.get_action_and_value(b_obs[mb_inds], b_actions[mb_inds])
             logratio = newlogprob - b_logprobs[mb_inds]
