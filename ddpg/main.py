@@ -46,13 +46,13 @@ ddpg_config.state_size = 24         # enviroment size
 ddpg_config.action_size = 2         # action size
 ddpg_config.seed = 42
 
-ddpg_config.update_step = 5
+ddpg_config.update_step = 10
 
 ## DDPG Params
-ddpg_config.buffer_size = int(1e2)  # replay buffer size
-ddpg_config.batch_size = 16        # minibatch size
+ddpg_config.buffer_size = int(1e4)  # replay buffer size
+ddpg_config.batch_size = 32        # minibatch size
 ddpg_config.gamma = 0.99            # discount factor
-ddpg_config.tau = 1e-3              # for soft update of target parameters
+ddpg_config.tau = 1e-2              # for soft update of target parameters
 ddpg_config.lr_actor = 1e-4         # learning rate of the actor
 ddpg_config.lr_critic = 1e-3        # learning rate of the critic
 ddpg_config.weight_decay = 0.0     # L2 weight decay
@@ -60,7 +60,7 @@ ddpg_config.loss = 'l1_smooth'      # loss functions include 'mae' or 'mse'
 
 ## Noise Params
 ddpg_config.theta = 0.15
-ddpg_config.sigma = 0.2
+ddpg_config.sigma = 0.02
 ddpg_config.add_noise = True
 
 with open('ddpg/ddpg_config.json', 'w') as f:
@@ -68,13 +68,13 @@ with open('ddpg/ddpg_config.json', 'w') as f:
 
 p0_agent = Agent(ddpg_config)
 p1_agent = Agent(ddpg_config)
+p1_agent.memory = p0_agent.memory
 
+n_episodes=1000
+max_t=1000
+print_every=50
 
-n_episodes=10000
-max_t=250
-print_every=20
-
-scores_deque = deque(maxlen=200)
+scores_deque = deque(maxlen=100)
 scores_eps_deque = deque(maxlen=2)
 scores = []
 eps_actor_loss = []
@@ -113,27 +113,27 @@ for i_episode in range(1, n_episodes+1):
         p1_score += reward[1]
         if np.any(done):
             break
-    # if i_episode == 250:
-    #     ddpg_config.add_noise = False
+    if i_episode == 750:
+        ddpg_config.add_noise = False
     
     # pdb.set_trace()
     
-    scores_deque.append(p0_score)
-    scores_deque.append(p1_score)
+    scores_deque.append(max(p0_score,p1_score))
+
     scores_eps_deque.append(p0_score)
     scores_eps_deque.append(p1_score)
     scores.append(p0_score)
     scores.append(p1_score)
 
     if i_episode % print_every == 0:
-        print('\rEpisode {}\tAverage Score: {:.4f}\tEpisode Score: {:.4f}\tCritic Loss: {:.5f}\tActor Loss: {:.5f}'.format(i_episode, np.mean(scores_deque),  np.mean(scores_eps_deque), eps_critic_loss[-1], eps_actor_loss[-1]))
-        # torch.save(p0_agent.actor_local.state_dict(), 'p0_checkpoint_actor.pth')
-        # torch.save(p0_agent.critic_local.state_dict(), 'p0_checkpoint_critic.pth')
-        # torch.save(p1_agent.actor_local.state_dict(), 'p1_checkpoint_actor.pth')
-        # torch.save(p1_agent.critic_local.state_dict(), 'p1_checkpoint_critic.pth')
+        print('\rEpisode {}\tAverage Score: {:.4f}\tCritic Loss: {:.5f}\tActor Loss: {:.5f}\tEpisode Score: {}'.format(i_episode, np.mean(scores_deque), eps_critic_loss[-1], eps_actor_loss[-1], scores_eps_deque))
+        torch.save(p0_agent.actor_local.state_dict(), 'ddpg/p0_checkpoint_actor.pth')
+        torch.save(p0_agent.critic_local.state_dict(), 'ddpg/p0_checkpoint_critic.pth')
+        torch.save(p1_agent.actor_local.state_dict(), 'ddpg/p1_checkpoint_actor.pth')
+        torch.save(p1_agent.critic_local.state_dict(), 'ddpg/p1_checkpoint_critic.pth')
 
     elif eps_critic_loss:
-        print('\rEpisode {}\tAverage Score: {:.4f}\tEpisode Score: {:.4f}\tCritic Loss: {:.5f}\tActor Loss: {:.5f}'.format(i_episode, np.mean(scores_deque),  np.mean(scores_eps_deque), eps_critic_loss[-1], eps_actor_loss[-1]),end="")
+        print('\rEpisode {}\tAverage Score: {:.4f}\tCritic Loss: {:.5f}\tActor Loss: {:.5f}\tEpisode Score: {}'.format(i_episode, np.mean(scores_deque),  eps_critic_loss[-1], eps_actor_loss[-1],scores_eps_deque,),end="")
 
 #pdb.set_trace()
 
@@ -141,7 +141,7 @@ logs = pd.DataFrame({'actor_loss':eps_actor_loss, 'critic_loss':eps_critic_loss}
 logs.to_csv('ddpg/ddpg_loss_logs.csv')
 
 _scores = pd.DataFrame({'scores':scores})
-_scores.to_csv('ddpg_scores_logs.csv')
+_scores.to_csv('ddpg/ddpg_scores_logs.csv')
 
 fig = plt.figure()
 ax = fig.add_subplot(111)

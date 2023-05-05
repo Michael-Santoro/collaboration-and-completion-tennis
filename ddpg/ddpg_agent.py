@@ -60,7 +60,7 @@ class Agent():
         # Learn, if enough samples are available in memory
         if (len(self.memory) > self.config.batch_size) and (t%self.update_every_step==0):
             ## For each learn call there will be 20 gradient steps or epochs
-            for e in range(3):
+            for e in range(20):
                 experiences = self.memory.sample()
                 self.learn(experiences)
             return np.mean(self.actor_loss), np.mean(self.critic_loss)
