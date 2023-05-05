@@ -51,8 +51,8 @@ torch.backends.cudnn.deterministic = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-num_steps = 100
-total_timesteps = int(6e6)
+num_steps = 1000
+total_timesteps = int(2e6)
 num_envs = 2
 single_observation_space = 24
 single_action_space = 2
@@ -61,12 +61,12 @@ anneal_lr = True        #Toggle learning rate annealing for policy and value net
 learning_rate = 3e-4    #the learning rate of the optimizer
 gamma = 0.99            #the discount factor gamma
 gae_lambda = 0.95       #the lambda for the general advantage estimation
-update_epochs = 20      #the K epochs to update the policy
-num_minibatches = 10    #the number of mini-batches **Could Change to 4**
-clip_coef = 0.2         #the surrogate clipping coefficient
+update_epochs = 16     #the K epochs to update the policy
+num_minibatches = 32    #the number of mini-batches **Could Change to 4**
+clip_coef = 0.5         #the surrogate clipping coefficient
 clip_vloss = True       #Toggles whether or not to use a clipped loss for the value function, as per the paper.
 norm_adv = True         #Toggles advantages normalization
-ent_coef = 0.0          #coefficient of the entropy
+ent_coef = 0.01          #coefficient of the entropy
 vf_coef = 0.5           #coefficient of the value function
 max_grad_norm = 0.5     #the maximum norm for the gradient clipping
 target_kl = None        #the target KL divergence threshold
@@ -88,7 +88,7 @@ values = torch.zeros((num_steps, num_envs)).to(device)
 num_updates = total_timesteps // batch_size
 
 global_step = 0
-scores_deque = deque(maxlen=200)
+scores_deque = deque(maxlen=100)
 
 print(f'Number of Updates: {num_updates}')
 
@@ -148,8 +148,10 @@ for update in range(1, num_updates + 1):
 
     
     scores = np.sum(rewards.cpu().numpy(),axis=0)
+    scores_deque.append(scores.max())
+    # pdb.set_trace()
     for i in scores:
-        scores_deque.append(i)
+        
         records['scores'].append(i)
 
     print('Step: {}\t\tAverage Score: {:.4f}\t\tScore: {}'.format(update,np.mean(scores_deque),scores))
@@ -168,10 +170,12 @@ for update in range(1, num_updates + 1):
     clipfracs = []
     for epoch in range(update_epochs):
         np.random.shuffle(b_inds)
-        # pdb.set_trace()
+        
         for start in range(0, batch_size, minibatch_size):
             end = start + minibatch_size
             mb_inds = b_inds[start:end]
+            # if update >= 377:
+            #     pdb.set_trace()
 
             _, newlogprob, entropy, newvalue = agent.get_action_and_value(b_obs[mb_inds], b_actions[mb_inds])
             logratio = newlogprob - b_logprobs[mb_inds]
