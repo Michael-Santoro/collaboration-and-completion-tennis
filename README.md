@@ -2,9 +2,9 @@
 ## Multi-Agent Reinforcement Learning
 **Michael Santoro - micheal.santoro@du.edu**
 # Introduction
-This project explores Deep Reinforcement Learning in an enviroment with multiple agents. This particular enviroment requires continious control. The plan is use the [Proximal Policy Opimization](https://arxiv.org/abs/1707.06347) (PPO). PPO is a popular algorithm used for solving continuous control problems in reinforcement learning.
+This project explores Deep Reinforcement Learning in an enviroment with multiple agents. This particular enviroment requires continious control. The plan is use the [Deep Deterministic Policy Gradient](https://arxiv.org/abs/1509.02971). DDPG is a popular algorithm used for solving continuous control problems in reinforcement learning.
 
-PPO, is a model-free, on-policy algorithm that is designed to handle both discrete and continuous action spaces. It uses a trust region optimization approach to update the policy, which ensures that the new policy is not too far from the old policy. This helps to prevent the policy from diverging during training. PPO has been shown to be effective in solving a variety of continuous control problems, such as humanoid locomotion and robotic manipulation.
+DDPG is a model-free, off-policy algorithm that is an extension of the actor-critic architecture. It is designed to handle continuous action spaces, which can be difficult for other algorithms like DQN. DDPG uses two neural networks: an actor network that maps states to actions, and a critic network that estimates the Q-value of a given state-action pair. The actor network is trained to maximize the Q-value estimated by the critic network. DDPG has been shown to be effective in solving a variety of continuous control problems, such as robotic arm control and autonomous driving.
 
 This a solution submission for the Deep Reinforcement Learning by Udacity. The problem details can be found [here](https://github.com/udacity/deep-reinforcement-learning/tree/master/p3_collab-compet).
 
