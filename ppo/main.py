@@ -66,8 +66,8 @@ num_minibatches = 32    #the number of mini-batches **Could Change to 4**
 clip_coef = 0.2         #the surrogate clipping coefficient
 clip_vloss = True       #Toggles whether or not to use a clipped loss for the value function, as per the paper.
 norm_adv = True         #Toggles advantages normalization
-ent_coef = 0.0          #coefficient of the entropy
-vf_coef = 0.5           #coefficient of the value function
+ent_coef = 0.5          #coefficient of the entropy
+vf_coef = 0.75           #coefficient of the value function
 max_grad_norm = 0.5     #the maximum norm for the gradient clipping
 target_kl = None        #the target KL divergence threshold
 
@@ -174,8 +174,8 @@ for update in range(1, num_updates + 1):
         for start in range(0, batch_size, minibatch_size):
             end = start + minibatch_size
             mb_inds = b_inds[start:end]
-            # if update >= 377:
-            #     pdb.set_trace()
+            if update >= 668:
+                pdb.set_trace()
 
             _, newlogprob, entropy, newvalue = agent.get_action_and_value(b_obs[mb_inds], b_actions[mb_inds])
             logratio = newlogprob - b_logprobs[mb_inds]
